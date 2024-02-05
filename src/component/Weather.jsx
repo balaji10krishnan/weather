@@ -123,7 +123,7 @@ function Weather() {
             </div>
             <p className={classes.city}>{weatherData?.name}</p>
             <h2 className={classes.temp}>
-              {weatherData?.main?.temp}
+              {Math.round(weatherData?.main?.temp)}
               <span className={classes.tempType}>
                 <span
                   className={units === "imperial" ? classes.unitActive : ""}
@@ -149,13 +149,15 @@ function Weather() {
             <div>
               <p className={classes.title}>Feels Like</p>
               <p className={classes.value}>
-                {weatherData?.main?.feels_like}°
+                {Math.round(weatherData?.main?.feels_like)}°
                 {units === "imperial" ? "F" : "C"}
               </p>
             </div>
             <div>
               <p className={classes.title}>Wind Speed</p>
-              <p className={classes.value}>{weatherData?.wind?.speed}MPH</p>
+              <p className={classes.value}>
+                {Math.round(weatherData?.wind?.speed)}MPH
+              </p>
             </div>
           </div>
         </div>
