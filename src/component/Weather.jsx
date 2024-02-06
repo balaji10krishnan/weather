@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import classes from "./weather.module.css";
-import { getWeatherApi } from "../api/getWeather";
+import classes from "./Weather.module.css";
+import clearSky from "../assets/icons/01d@2x.png";
+import { getWeatherApi } from "../api/getWeatherApi";
 import O1d from "../assets/icons/01d@2x.png";
 import O1n from "../assets/icons/01n@2x.png";
 import O2d from "../assets/icons/02d@2x.png";
@@ -13,36 +14,41 @@ import O9d from "../assets/icons/09d@2x.png";
 import O11d from "../assets/icons/11d@2x.png";
 import O13d from "../assets/icons/13d@2x.png";
 import O50d from "../assets/icons/50d@2x.png";
-import sunny from "../assets/background/clear_sky.jpg";
-import cloud from "../assets/background/cloud.jpg";
-import mist from "../assets/background/mist.jpg";
-import rain from "../assets/background/rain.jpg";
-import snow from "../assets/background/snow.jpg";
-import strom from "../assets/background/strom.jpg";
+import sunny from "../assets/bg/clear_sky.jpg";
+import cloud from "../assets/bg/cloud.jpg";
+import mist from "../assets/bg/mist.jpg";
+import rain from "../assets/bg/rain.jpg";
+import snow from "../assets/bg/snow.jpg";
+import strom from "../assets/bg/strom.jpg";
 function Weather() {
-  const [city, setCity] = useState("Chennai");
-  const [inputValue, setinputValue] = useState("");
   const [weatherData, setWeatherData] = useState({});
-  const [units, setUnits] = useState("imperial");
-  const [image, setImage] = useState();
+  const [inputValue, setInputValue] = useState("");
+  const [city, setCityValue] = useState("Chennai");
+  const [unit, setUnitValue] = useState("imperial");
+  const [image, setImage] = useState("");
   const [backgroungImage, setBackgroungImage] = useState("");
-  const getWeather = async (e) => {
-    if (e.key === "Enter") {
-      const responce = await getWeatherApi(city, units);
+  const [loader, setLoader] = useState(true);
+  const getWeather = async (city, unit) => {
+    try {
+      setLoader(true);
+      const responce = await getWeatherApi(city, unit);
       if (responce) {
         setWeatherData(responce);
         iconSet(responce?.weather[0]?.icon);
       }
-      setinputValue("");
+    } catch (err) {
+      console.log("Error", err);
+    } finally {
+      setLoader(false);
     }
   };
-  const getInitialWeather = async () => {
-    const responce = await getWeatherApi(city, units);
-    if (responce) {
-      setWeatherData(responce);
-      iconSet(responce?.weather[0]?.icon);
+  const handleInput = (e) => {
+    if (e.keyCode === 13) {
+      getWeather(city, "metric");
+      setInputValue("");
     }
   };
+
   const iconSet = (value) => {
     if (value === "01d") {
       setImage(O1d);
@@ -89,79 +95,119 @@ function Weather() {
     }
   };
   useEffect(() => {
-    getInitialWeather();
-  }, [units]);
+    getWeather(city, unit);
+  }, [unit]);
   return (
     <>
-      <div
-        className={classes.main}
-        style={{
-          backgroundImage: `url(${backgroungImage})`,
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className={classes.search}>
-          <input
-            className={classes.input}
-            placeholder="Search The City"
-            onChange={(e) => {
-              setinputValue(e.target.value);
-              setCity(e.target.value);
-            }}
-            value={inputValue}
-            onKeyPress={(e) => {
-              getWeather(e);
-            }}
-          />
+      {loader ? (
+        <div className={classes.loaderAlign}>
+          <div className={classes.loader}></div>
         </div>
-        <div className={classes.continer}>
-          <div className={classes.weatherDel}>
-            <div className={classes.header}>
-              <img src={image} /> <p>SkyScanner</p>
+      ) : (
+        <div
+          className={classes.main}
+          style={{
+            backgroundImage: `url(${backgroungImage})`,
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className={classes.container}>
+            <div className={classes.search}>
+              <input
+                placeholder="Search The City"
+                value={inputValue}
+                onKeyDown={(e) => {
+                  handleInput(e);
+                }}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  setCityValue(e.target.value);
+                }}
+              />
             </div>
-            <p className={classes.city}>{weatherData?.name}</p>
-            <h2 className={classes.temp}>
-              {Math.round(weatherData?.main?.temp)}
-              <span className={classes.tempType}>
-                <span
-                  className={units === "imperial" ? classes.unitActive : ""}
-                  onClick={() => setUnits("imperial")}
-                >
-                  °F
-                </span>{" "}
-                |{" "}
-                <span
-                  className={units === "metric" ? classes.unitActive : ""}
-                  onClick={() => setUnits("metric")}
-                >
-                  °C
-                </span>
-              </span>
-            </h2>
-          </div>
-          <div className={classes.footer}>
-            <div>
-              <p className={classes.title}>Humidity</p>
-              <p className={classes.value}>{weatherData?.main?.humidity}%</p>
+            <div className={classes.weatherInfo}>
+              <div className={classes.cityDel}>
+                <div className={classes.logo}>
+                  <img src={image} />
+                  <h1>SkyScanner</h1>
+                </div>
+                <div className={classes.cityName}>
+                  <span>{weatherData?.name}, </span>
+                  <span>{weatherData?.sys?.country}</span>
+                  <p className={classes.climate}>
+                    {weatherData?.weather?.[0]?.main}
+                  </p>
+                </div>
+              </div>
+              <div className={classes.temp}>
+                <p>
+                  {Math.round(weatherData?.main?.temp)}
+                  <span className={classes.unit}>
+                    <span
+                      onClick={() => {
+                        setUnitValue("imperial");
+                      }}
+                      style={{ cursor: "pointer" }}
+                      className={unit === "imperial" ? classes.opacity : ""}
+                    >
+                      {" "}
+                      °F{" "}
+                    </span>{" "}
+                    |{" "}
+                    <span
+                      onClick={() => {
+                        setUnitValue("metric");
+                      }}
+                      style={{ cursor: "pointer" }}
+                      className={unit === "metric" ? classes.opacity : ""}
+                    >
+                      {" "}
+                      °C
+                    </span>
+                  </span>
+                </p>
+              </div>
             </div>
-            <div>
-              <p className={classes.title}>Feels Like</p>
-              <p className={classes.value}>
-                {Math.round(weatherData?.main?.feels_like)}°
-                {units === "imperial" ? "F" : "C"}
-              </p>
-            </div>
-            <div>
-              <p className={classes.title}>Wind Speed</p>
-              <p className={classes.value}>
-                {Math.round(weatherData?.wind?.speed)}MPH
-              </p>
+            <div className={classes.weatherDel}>
+              <div className={classes.weatherDiv}>
+                <p className={classes.head}>Tem_max</p>
+                <p className={classes.value}>
+                  {Math.round(weatherData?.main?.temp_max)}
+                  {unit === "imperial" ? "°F" : "°C"}
+                </p>
+              </div>
+              <div className={classes.weatherDiv}>
+                <p className={classes.head}>Tem_min</p>
+                <p className={classes.value}>
+                  {Math.round(weatherData?.main?.temp_min)}
+                  {unit === "imperial" ? "°F" : "°C"}
+                </p>
+              </div>
+              <div className={classes.weatherDiv}>
+                <p className={classes.head}>Humidity</p>
+                <p className={classes.value}>{weatherData?.main?.humidity}</p>
+              </div>
+              <div className={classes.weatherDiv}>
+                <p className={classes.head}>Pressure</p>
+                <p className={classes.value}>{weatherData?.main?.pressure}</p>
+              </div>
+              <div className={classes.weatherDiv}>
+                <p className={classes.head}>Wind</p>
+                <p className={classes.value}>{weatherData?.wind?.speed}</p>
+              </div>
+              <div className={classes.weatherDiv}>
+                <p className={classes.head}>Feels Like</p>
+                <p className={classes.value}>
+                  {Math.round(weatherData?.main?.feels_like)}
+                  {unit === "imperial" ? "°F" : "°C"}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
